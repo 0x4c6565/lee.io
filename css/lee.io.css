@@ -1,0 +1,38 @@
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background-color: rgb(247, 250, 252);
+    font-family: 'Nunito', sans-serif;
+}
+
+.flex-container {
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-item {
+    height: 20px;
+    margin: 10px;
+    letter-spacing: 0.9px;
+    line-height: 27px;
+    color: rgb(160, 174, 192);
+    font-size: 18px;
+    text-transform: uppercase;
+}
+
+.title {
+    color: rgb(84, 91, 100);
+}
+
+.flex-item a {
+    color: rgb(160, 174, 192);
+    text-decoration: none;
+}
