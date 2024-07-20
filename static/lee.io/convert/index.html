@@ -1,0 +1,70 @@
+<!doctype html>
+<link rel="stylesheet" href="css/convert.lee.io.css">
+<link href="css/toastr.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+  integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
+  crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+
+<body>
+
+  <div id="app">
+
+    <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+      <div class="navbar-menu is-active">
+
+        <div class="navbar-end">
+          <div class="navbar-item">
+
+
+            <div class="field">
+              <div class="control has-icons-left">
+                <div class="select">
+                  <select class="form-control" v-model="type">
+                    <option value="">Select..</option>
+                    <option v-for="(tool, key) in tools" v-bind:value="key">{{ tool.displayName }}</option>
+                  </select>
+                </div>
+                <div class="icon is-small is-left">
+                  <i class="fas fa-code"></i>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="editor">
+      <textarea id="lhs" class="editor-pane" v-bind:class="{ error: lhsHasError }" v-model="lhs"></textarea>
+      <textarea id="rhs" class="editor-pane" v-bind:class="{ error: rhsHasError }" v-model="rhs"
+        v-bind:readonly="rhsReadOnly"></textarea>
+    </div>
+    <div class="fab-button is-primary">
+      <span class="icon">
+        <i class="fas fa-cog fa-2x"></i>
+      </span>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/js/all.min.js"
+    integrity="sha512-naukR7I+Nk6gp7p5TMA4ycgfxaZBJ7MO5iC3Fp6ySQyKFHOGfpkSZkYVWV5R7u7cfAicxanwYQ5D1e17EfJcMA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="js/vue.js"></script>
+  <script src="js/jquery.min.js"></script>
+  <script src="js/toastr.min.js"></script>
+  <script src="https://static.lee.io/js/hashparams.js"></script>
+  <script src="js/convert.lee.io.js"></script>
+  <script src="js/crypto/components/core-min.js"></script>
+  <script src="js/crypto/components/x64-core-min.js"></script>
+  <script src="js/crypto/components/sha1-min.js"></script>
+  <script src="js/crypto/components/sha256-min.js"></script>
+  <script src="js/crypto/components/sha512-min.js"></script>
+  <script src="js/yaml.min.js"></script>
+  <script src="js/vkbeautify.js"></script>
+  <script src="js/sql-formatter.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.7.5/beautify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.7.5/beautify-css.min.js"></script>
+  <script src="https://static.lee.io/js/json2csharp.js"></script>
+  <script src="https://static.lee.io/js/json2go.js"></script>
+</body>

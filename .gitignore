@@ -1,0 +1,4 @@
+.vscode/
+leeio_data/
+.dbenv
+.config.yml

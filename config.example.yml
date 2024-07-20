@@ -1,0 +1,11 @@
+initialise: true
+debug: true
+
+db:
+  host: localhost
+  db: leeio
+  user: leeio
+  password: pa$$w0rd
+
+geoip:
+  database_path: ./leeio_data/GeoLite2-City.mmdb

@@ -1,0 +1,16 @@
+.main {
+    background-color: rgb(247, 250, 252);
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: rgb(160, 174, 192);
+    letter-spacing: 0.9px;
+}
+
+.title-light {
+    color: rgb(116, 120, 126);
+}
+
+.title {
+    color: rgb(84, 91, 100);
+}
