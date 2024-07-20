@@ -92,17 +92,17 @@ func (h *handler) handle(rw http.ResponseWriter, r *http.Request) {
 		Str("method", r.Method).
 		Str("path", r.URL.Path).
 		Msgf("Handling request")
-	accept := r.Header.Get("Accept")
+	accept := r.Header.Values("Accept")
 	userAgent := r.Header.Values("User-agent")
 
 	response, err := h.tool.Handle(r)
 
-	acceptSplit := strings.Split(accept, ",")
-	if len(acceptSplit) > 0 {
-		accept = strings.TrimSpace(acceptSplit[0])
+	acceptHeader := ""
+	if len(accept) > 0 {
+		acceptHeader = accept[0]
 	}
 
-	switch accept {
+	switch acceptHeader {
 	case "application/json":
 		if err != nil {
 			jsonResponse(rw, 500, jsonErrorResponse{Error: err.Error()})
