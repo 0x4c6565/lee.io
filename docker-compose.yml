@@ -8,15 +8,15 @@ services:
       - ./.dbenv
     ports:
       - 3306:3306
-    leeio_app:
-      image: leeio
-      build: .
-      restart: unless-stopped
-      volumes:
-        - ./leeio_data/config.yaml:/app/config.yaml
-        - ./leeio_data/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
-      depends_on:
-        - leeio_mysql
+  leeio_app:
+    image: leeio
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./leeio_data/config.yaml:/app/config.yaml
+      - ./leeio_data/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
+    depends_on:
+      - leeio_mysql
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:5.2
     ports:
