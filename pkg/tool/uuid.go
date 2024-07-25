@@ -19,7 +19,6 @@ func NewUUID() *UUID {
 func (u *UUID) Paths() []string {
 	return []string{
 		"/uuid",
-		"/uuid/",
 		"/uuid/{count}",
 	}
 }

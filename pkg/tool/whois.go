@@ -23,7 +23,6 @@ func NewWhois() *Whois {
 func (w *Whois) Paths() []string {
 	return []string{
 		"/whois",
-		"/whois/",
 		"/whois/{host}",
 	}
 }

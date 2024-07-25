@@ -23,7 +23,6 @@ func (s *Subnet) Paths() []string {
 	return []string{
 		"/subnet",
 		"/subnet/{address}",
-		"/subnet/{address}/",
 		"/subnet/{address}/{mask}",
 	}
 }

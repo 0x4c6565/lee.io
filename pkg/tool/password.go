@@ -22,10 +22,8 @@ func NewPassword() *Password {
 func (p *Password) Paths() []string {
 	return []string{
 		"/pw",
-		"/pw/",
 		"/pw/{length}",
 		"/password",
-		"/password/",
 		"/password/{length}",
 	}
 }

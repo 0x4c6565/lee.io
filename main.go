@@ -63,6 +63,7 @@ func main() {
 		tool.NewPassword(),
 		tool.NewSSLDecode(),
 		tool.NewEUI64(),
+		tool.NewSSL(),
 	)
 
 	err = server.Start(ctx)

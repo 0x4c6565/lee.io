@@ -21,9 +21,7 @@ func NewPort() *Port {
 func (p *Port) Paths() []string {
 	return []string{
 		"/port",
-		"/port/",
 		"/port/{port}",
-		"/port/{port}/",
 		"/port/{port}/{host}",
 	}
 }

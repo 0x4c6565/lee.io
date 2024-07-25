@@ -94,7 +94,6 @@ func NewMAC(macOUIRepository MACOUIRepository) *MAC {
 func (m *MAC) Paths() []string {
 	return []string{
 		"/mac",
-		"/mac/",
 		"/mac/{query}",
 	}
 }

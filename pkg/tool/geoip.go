@@ -39,7 +39,6 @@ func NewGeoIP(reader GeoIPReader) *GeoIP {
 func (g *GeoIP) Paths() []string {
 	return []string{
 		"/geoip",
-		"/geoip/",
 		"/geoip/{host}",
 	}
 }

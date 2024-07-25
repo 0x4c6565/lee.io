@@ -29,9 +29,7 @@ func NewSelfSigned() *SelfSigned {
 func (s *SelfSigned) Paths() []string {
 	return []string{
 		"/selfsigned",
-		"/selfsigned/",
 		"/selfsigned/{hosts}",
-		"/selfsigned/{hosts}/",
 		"/selfsigned/{hosts}/{days}",
 	}
 }

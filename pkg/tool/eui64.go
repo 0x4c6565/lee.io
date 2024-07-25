@@ -17,9 +17,7 @@ func NewEUI64() *EUI64 {
 func (i *EUI64) Paths() []string {
 	return []string{
 		"/eui64",
-		"/eui64/",
 		"/eui64/{prefix}",
-		"/eui64/{prefix}/",
 		"/eui64/{prefix}/{mac}",
 	}
 }
