@@ -137,7 +137,7 @@ func jsonResponse(rw http.ResponseWriter, code int, data interface{}) {
 }
 
 func plainResponse(rw http.ResponseWriter, code int, data string) {
-	rw.Header().Add("Content-type", "text/plain")
+	rw.Header().Add("Content-type", "text/plain;charset=UTF-8")
 	rw.WriteHeader(code)
 	rw.Write([]byte(data))
 }
