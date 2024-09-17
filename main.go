@@ -64,6 +64,7 @@ func main() {
 		tool.NewSSLDecode(),
 		tool.NewEUI64(),
 		tool.NewSSL(),
+		tool.NewProjectName(),
 	)
 
 	err = server.Start(ctx)
