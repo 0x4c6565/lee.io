@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/0x4c6565/lee.io/internal/pkg/util"
 	"github.com/gorilla/mux"
@@ -83,7 +84,7 @@ func (w *Whois) parseWhoisServer(response io.Reader) (string, error) {
 }
 
 func (w *Whois) doQuery(server, query string) (net.Conn, error) {
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:43", server))
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:43", server), time.Second*10)
 	if err != nil {
 		return nil, err
 	}

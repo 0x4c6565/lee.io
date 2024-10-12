@@ -1,6 +1,7 @@
 package tool
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/0x4c6565/lee.io/internal/pkg/util"
 	"github.com/gorilla/mux"
@@ -51,18 +53,23 @@ func (i *SSL) Handle(r *http.Request) (*ToolResponse, error) {
 		}
 	}
 
-	conf := &tls.Config{
-		InsecureSkipVerify: true,
+	dialer := &tls.Dialer{
+		Config: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 	}
 
-	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", host, port), conf)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		log.Error().Err(err).Send()
 		return nil, errors.New("failed to connect to TLS host")
 	}
 	defer conn.Close()
 
-	certs := conn.ConnectionState().PeerCertificates
+	tlsConn := conn.(*tls.Conn)
+	certs := tlsConn.ConnectionState().PeerCertificates
 
 	interPool := x509.NewCertPool()
 	var responseChain []SSLChainResponseData

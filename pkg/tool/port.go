@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/0x4c6565/lee.io/internal/pkg/util"
 	"github.com/gorilla/mux"
@@ -53,7 +54,7 @@ func (p *Port) Handle(r *http.Request) (*ToolResponse, error) {
 	}
 
 	status := "Open"
-	_, err = net.Dial("tcp", fmt.Sprintf("%s:%d", host, portInt))
+	_, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, portInt), time.Second*10)
 	if err != nil {
 		status = "Closed"
 	}
