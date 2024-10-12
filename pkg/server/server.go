@@ -57,7 +57,7 @@ func (s *Server) Start(ctx context.Context) error {
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/lee.io")))
 
 	go c.Run()
-	server := &http.Server{Addr: ":8080", Handler: r}
+	server := &http.Server{Addr: ":8080", Handler: ProxyHeaders(r)}
 
 	var err error
 	go func() {
