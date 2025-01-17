@@ -2,16 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/0x4c6565/lee.io/pkg/connection"
 	"github.com/0x4c6565/lee.io/pkg/server"
 	"github.com/0x4c6565/lee.io/pkg/tool"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -40,14 +39,11 @@ func main() {
 		cancel()
 	}()
 
-	conn, err := sqlx.Connect("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", config.DB.User, config.DB.Password, config.DB.Host, config.DB.Port, config.DB.DB))
-	if err != nil {
-		log.Fatal().Msgf("failed to connect to database: %s", err)
-	}
-
 	serverOpts := server.ServerOptions{
 		Initialise: config.Initialise,
 	}
+
+	connFactory := connection.NewMySQLConnectionFactory(config.DB.Host, config.DB.Port, config.DB.User, config.DB.Password, config.DB.DB)
 
 	server := server.NewServer(serverOpts).WithTools(
 		tool.NewWhois(),
@@ -56,8 +52,8 @@ func main() {
 		tool.NewSelfSigned(),
 		tool.NewKeypair(),
 		tool.NewSubnet(),
-		tool.NewMAC(tool.NewMACOUIMySQLRepository(conn)),
-		tool.NewBGP(tool.NewBGPRouteMySQLRepository(conn)),
+		tool.NewMAC(connFactory),
+		tool.NewBGP(connFactory),
 		tool.NewUUID(),
 		tool.NewGeoIP(tool.NewGeoIP2FileSystemReader(config.GeoIP.DatabasePath)),
 		tool.NewPassword(),

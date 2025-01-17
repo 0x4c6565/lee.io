@@ -9,8 +9,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/0x4c6565/lee.io/pkg/connection"
+	ierr "github.com/0x4c6565/lee.io/pkg/error"
 	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 	"github.com/olekukonko/tablewriter"
 	"github.com/rs/zerolog/log"
 )
@@ -37,22 +38,17 @@ type MACOUI struct {
 	CompanyName string `db:"company_name"`
 }
 
-type MACOUIRepository interface {
-	Get(oui string, companyName string) (*[]MACOUI, error)
-	Set(oui string, companyName string) error
+type MACOUIRepository struct {
+	conn connection.Connection
 }
 
-type MACOUIMySQLRepository struct {
-	conn *sqlx.DB
-}
-
-func NewMACOUIMySQLRepository(conn *sqlx.DB) *MACOUIMySQLRepository {
-	return &MACOUIMySQLRepository{
+func NewMACOUIRepository(conn connection.Connection) *MACOUIRepository {
+	return &MACOUIRepository{
 		conn: conn,
 	}
 }
 
-func (s *MACOUIMySQLRepository) Get(oui string, companyName string) (*[]MACOUI, error) {
+func (s *MACOUIRepository) Get(oui string, companyName string) (*[]MACOUI, error) {
 	p := []MACOUI{}
 	err := s.conn.Select(&p, "SELECT * FROM mac_oui WHERE oui LIKE ? OR company_name LIKE ?", oui, companyName)
 	if err != nil {
@@ -65,7 +61,7 @@ func (s *MACOUIMySQLRepository) Get(oui string, companyName string) (*[]MACOUI, 
 	return &p, nil
 }
 
-func (s *MACOUIMySQLRepository) Set(oui string, companyName string) error {
+func (s *MACOUIRepository) Set(oui string, companyName string) error {
 	p := MACOUI{}
 	err := s.conn.Get(&p, "SELECT * FROM mac_oui WHERE oui = ?", oui)
 	if err != nil {
@@ -82,12 +78,12 @@ func (s *MACOUIMySQLRepository) Set(oui string, companyName string) error {
 }
 
 type MAC struct {
-	macOUIRepository MACOUIRepository
+	connFactory connection.ConnectionFactory
 }
 
-func NewMAC(macOUIRepository MACOUIRepository) *MAC {
+func NewMAC(connFactory connection.ConnectionFactory) *MAC {
 	return &MAC{
-		macOUIRepository: macOUIRepository,
+		connFactory: connFactory,
 	}
 }
 
@@ -113,7 +109,15 @@ func (m *MAC) Handle(r *http.Request) (*ToolResponse, error) {
 	mac := m.sanitiseMAC(query) + "%"
 	company := "%" + query + "%"
 
-	results, err := m.macOUIRepository.Get(mac, company)
+	conn, err := m.connFactory.New()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to initialise database")
+		return nil, ierr.InternalServerError
+	}
+
+	macOUIRepository := NewMACOUIRepository(conn)
+
+	results, err := macOUIRepository.Get(mac, company)
 	if err != nil {
 		var notFoundErr *MACOUINotFoundError
 		if errors.As(err, &notFoundErr) {
@@ -153,6 +157,15 @@ func (m *MAC) Cron() CronSpec {
 
 func (m *MAC) cronWork() {
 	log.Info().Msg("MAC: Starting cron")
+
+	conn, err := m.connFactory.New()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to initialise database")
+		return
+	}
+
+	macOUIRepository := NewMACOUIRepository(conn)
+
 	response, err := http.Get(MAC_OUI_URL)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to query MAC OUI URL")
@@ -171,7 +184,7 @@ func (m *MAC) cronWork() {
 				continue
 			}
 
-			err := m.macOUIRepository.Set(fields[0], fields[2])
+			err := macOUIRepository.Set(fields[0], fields[2])
 			if err != nil {
 				log.Error().Err(err).Msgf("Failed to set OUI in DB")
 				continue

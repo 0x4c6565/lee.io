@@ -13,10 +13,11 @@ import (
 	"strings"
 
 	"github.com/0x4c6565/lee.io/internal/pkg/util"
+	"github.com/0x4c6565/lee.io/pkg/connection"
+	ierr "github.com/0x4c6565/lee.io/pkg/error"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-sockaddr"
-	"github.com/jmoiron/sqlx"
 	"github.com/olekukonko/tablewriter"
 	"github.com/rs/zerolog/log"
 )
@@ -57,28 +58,17 @@ type BGPRoute struct {
 	IPv6End     string `db:"ipv6_end"`
 }
 
-type BGPRouteRepository interface {
-	GetByASN(asn int) ([]BGPRoute, error)
-	GetByIPv4(ip net.IP) ([]BGPRoute, error)
-	GetByIPv6(ip net.IP) ([]BGPRoute, error)
-	GetByOwner(owner string) ([]BGPRoute, error)
-	Insert(route *BGPRoute) error
-	GetVersion() (int, error)
-	SetVersion(version int) error
-	RemoveRouteVersion(version int) error
+type BGPRouteRepository struct {
+	conn connection.Connection
 }
 
-type BGPRouteMySQLRepository struct {
-	conn *sqlx.DB
-}
-
-func NewBGPRouteMySQLRepository(conn *sqlx.DB) *BGPRouteMySQLRepository {
-	return &BGPRouteMySQLRepository{
+func NewBGPRouteRepository(conn connection.Connection) *BGPRouteRepository {
+	return &BGPRouteRepository{
 		conn: conn,
 	}
 }
 
-func (s *BGPRouteMySQLRepository) Insert(route *BGPRoute) error {
+func (s *BGPRouteRepository) Insert(route *BGPRoute) error {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return err
@@ -88,7 +78,7 @@ func (s *BGPRouteMySQLRepository) Insert(route *BGPRoute) error {
 	return err
 }
 
-func (s *BGPRouteMySQLRepository) GetByASN(asn int) ([]BGPRoute, error) {
+func (s *BGPRouteRepository) GetByASN(asn int) ([]BGPRoute, error) {
 	version, err := s.GetVersion()
 	if err != nil {
 		return nil, err
@@ -103,7 +93,7 @@ func (s *BGPRouteMySQLRepository) GetByASN(asn int) ([]BGPRoute, error) {
 	return p, nil
 }
 
-func (s *BGPRouteMySQLRepository) GetByIPv4(ip net.IP) ([]BGPRoute, error) {
+func (s *BGPRouteRepository) GetByIPv4(ip net.IP) ([]BGPRoute, error) {
 	version, err := s.GetVersion()
 	if err != nil {
 		return nil, err
@@ -119,7 +109,7 @@ func (s *BGPRouteMySQLRepository) GetByIPv4(ip net.IP) ([]BGPRoute, error) {
 	return p, nil
 }
 
-func (s *BGPRouteMySQLRepository) GetByIPv6(ip net.IP) ([]BGPRoute, error) {
+func (s *BGPRouteRepository) GetByIPv6(ip net.IP) ([]BGPRoute, error) {
 	version, err := s.GetVersion()
 	if err != nil {
 		return nil, err
@@ -134,7 +124,7 @@ func (s *BGPRouteMySQLRepository) GetByIPv6(ip net.IP) ([]BGPRoute, error) {
 	return p, nil
 }
 
-func (s *BGPRouteMySQLRepository) GetByOwner(owner string) ([]BGPRoute, error) {
+func (s *BGPRouteRepository) GetByOwner(owner string) ([]BGPRoute, error) {
 	version, err := s.GetVersion()
 	if err != nil {
 		return nil, err
@@ -151,7 +141,7 @@ func (s *BGPRouteMySQLRepository) GetByOwner(owner string) ([]BGPRoute, error) {
 	return p, nil
 }
 
-func (s *BGPRouteMySQLRepository) GetVersion() (int, error) {
+func (s *BGPRouteRepository) GetVersion() (int, error) {
 	p := BGPRouteVersion{}
 	err := s.conn.Get(&p, "SELECT * FROM bgp_route_version LIMIT 1")
 	if err != nil {
@@ -166,7 +156,7 @@ func (s *BGPRouteMySQLRepository) GetVersion() (int, error) {
 	return p.Version, nil
 }
 
-func (s *BGPRouteMySQLRepository) SetVersion(version int) error {
+func (s *BGPRouteRepository) SetVersion(version int) error {
 	p := BGPRouteVersion{}
 	err := s.conn.Get(&p, "SELECT * FROM bgp_route_version LIMIT 1")
 	if err != nil {
@@ -183,17 +173,17 @@ func (s *BGPRouteMySQLRepository) SetVersion(version int) error {
 	return err
 }
 
-func (s *BGPRouteMySQLRepository) RemoveRouteVersion(version int) error {
+func (s *BGPRouteRepository) RemoveRouteVersion(version int) error {
 	_, err := s.conn.Exec("DELETE FROM bgp_route WHERE version = ?", version)
 	return err
 }
 
 type BGP struct {
-	bgpRouteRepository BGPRouteRepository
+	connFactory connection.ConnectionFactory
 }
 
-func NewBGP(bgpRouteRepository BGPRouteRepository) *BGP {
-	return &BGP{bgpRouteRepository: bgpRouteRepository}
+func NewBGP(connFactory connection.ConnectionFactory) *BGP {
+	return &BGP{connFactory: connFactory}
 }
 
 func (b *BGP) Paths() []string {
@@ -217,16 +207,24 @@ func (b *BGP) Handle(r *http.Request) (*ToolResponse, error) {
 	var routes []BGPRoute
 	var queryErr error
 
+	conn, err := b.connFactory.New()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to initialise database")
+		return nil, ierr.InternalServerError
+	}
+
+	bgpRouteRepository := NewBGPRouteRepository(conn)
+
 	if asn, err := strconv.Atoi(strings.ToUpper(strings.TrimPrefix(query, "AS"))); err == nil {
-		routes, queryErr = b.bgpRouteRepository.GetByASN(asn)
+		routes, queryErr = bgpRouteRepository.GetByASN(asn)
 	} else if ipAddress := net.ParseIP(query); ipAddress != nil {
 		if ip4 := ipAddress.To4(); ip4 != nil {
-			routes, queryErr = b.bgpRouteRepository.GetByIPv4(ipAddress)
+			routes, queryErr = bgpRouteRepository.GetByIPv4(ipAddress)
 		} else {
-			routes, queryErr = b.bgpRouteRepository.GetByIPv6(ipAddress)
+			routes, queryErr = bgpRouteRepository.GetByIPv6(ipAddress)
 		}
 	} else {
-		routes, queryErr = b.bgpRouteRepository.GetByOwner(query)
+		routes, queryErr = bgpRouteRepository.GetByOwner(query)
 	}
 
 	if queryErr != nil {
@@ -254,7 +252,14 @@ func (b *BGP) Cron() CronSpec {
 func (b *BGP) cronWork() {
 	log.Info().Msg("BGP: Starting cron")
 
-	currentVersion, err := b.bgpRouteRepository.GetVersion()
+	conn, err := b.connFactory.New()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to initialise database")
+		return
+	}
+	bgpRouteRepository := NewBGPRouteRepository(conn)
+
+	currentVersion, err := bgpRouteRepository.GetVersion()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to query current version")
 		return
@@ -268,25 +273,25 @@ func (b *BGP) cronWork() {
 		return
 	}
 
-	// err = b.processIPv4Routes(newVersion, asnDetailsMap)
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("Failed to process IPv4 routes")
-	// 	return
-	// }
+	err = b.processIPv4Routes(bgpRouteRepository, newVersion, asnDetailsMap)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to process IPv4 routes")
+		return
+	}
 
-	err = b.processIPv6Routes(newVersion, asnDetailsMap)
+	err = b.processIPv6Routes(bgpRouteRepository, newVersion, asnDetailsMap)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to process IPv6 routes")
 		return
 	}
 
-	err = b.bgpRouteRepository.SetVersion(newVersion)
+	err = bgpRouteRepository.SetVersion(newVersion)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to set new version")
 		return
 	}
 
-	err = b.bgpRouteRepository.RemoveRouteVersion(currentVersion)
+	err = bgpRouteRepository.RemoveRouteVersion(currentVersion)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to remove old version routes")
 		return
@@ -327,7 +332,7 @@ func (b *BGP) getASNDetailsMap() (map[int]asnDetails, error) {
 	return result, nil
 }
 
-func (b *BGP) processIPv4Routes(version int, asnDetails map[int]asnDetails) error {
+func (b *BGP) processIPv4Routes(bgpRouteRepository *BGPRouteRepository, version int, asnDetails map[int]asnDetails) error {
 	log.Debug().Msg("Processing IPv4 routes")
 	response, err := http.Get(BGP_IPV4_RAW_TABLE_URL)
 	if err != nil {
@@ -370,7 +375,7 @@ func (b *BGP) processIPv4Routes(version int, asnDetails map[int]asnDetails) erro
 			IPv4End:     uint32(parsedRoutePrefix.BroadcastAddress()),
 		}
 
-		err = b.bgpRouteRepository.Insert(bgpRoute)
+		err = bgpRouteRepository.Insert(bgpRoute)
 		if err != nil {
 			return err
 		}
@@ -380,7 +385,7 @@ func (b *BGP) processIPv4Routes(version int, asnDetails map[int]asnDetails) erro
 	return nil
 }
 
-func (b *BGP) processIPv6Routes(version int, asnDetails map[int]asnDetails) error {
+func (b *BGP) processIPv6Routes(bgpRouteRepository *BGPRouteRepository, version int, asnDetails map[int]asnDetails) error {
 	log.Debug().Msg("Processing IPv6 routes")
 	response, err := http.Get(BGP_IPV6_RAW_TABLE_URL)
 	if err != nil {
@@ -423,7 +428,7 @@ func (b *BGP) processIPv6Routes(version int, asnDetails map[int]asnDetails) erro
 			IPv6End:     parsedRoutePrefix.LastUsable().String(),
 		}
 
-		err = b.bgpRouteRepository.Insert(bgpRoute)
+		err = bgpRouteRepository.Insert(bgpRoute)
 		if err != nil {
 			return err
 		}
