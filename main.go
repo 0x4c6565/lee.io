@@ -61,6 +61,7 @@ func main() {
 		tool.NewEUI64(),
 		tool.NewSSL(),
 		tool.NewProjectName(),
+		tool.NewRDNS(),
 	)
 
 	err = server.Start(ctx)

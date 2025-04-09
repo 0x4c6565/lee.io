@@ -1,5 +1,5 @@
 .vscode/
 leeio_data/
 .dbenv
-.config.yml
+config.yml
 lee.io
