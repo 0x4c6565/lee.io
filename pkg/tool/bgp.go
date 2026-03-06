@@ -450,7 +450,7 @@ type BGPResponseDataItem struct {
 func (r *BGPResponseData) String() string {
 	output := new(bytes.Buffer)
 	table := tablewriter.NewWriter(output)
-	table.SetHeader([]string{"route", "asn_number", "owner", "country_code"})
+	table.Header([]string{"route", "asn_number", "owner", "country_code"})
 
 	for _, bgp := range *r {
 		table.Append([]string{bgp.Route, strconv.FormatUint(uint64(bgp.ASNNumber), 10), bgp.Owner, bgp.CountryCode})

@@ -205,7 +205,7 @@ type MACResponseDataItem struct {
 func (r *MACResponseData) String() string {
 	output := new(bytes.Buffer)
 	table := tablewriter.NewWriter(output)
-	table.SetHeader([]string{"oui", "company"})
+	table.Header([]string{"oui", "company"})
 
 	for _, mac := range *r {
 		table.Append([]string{mac.OUI, mac.CompanyName})
