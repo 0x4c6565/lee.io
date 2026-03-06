@@ -1,6 +1,6 @@
 module github.com/0x4c6565/lee.io
 
-go 1.24.0
+go 1.26.1
 
 require (
 	github.com/go-sql-driver/mysql v1.9.3
