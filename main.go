@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/0x4c6565/lee.io/pkg/blog"
 	"github.com/0x4c6565/lee.io/pkg/connection"
 	"github.com/0x4c6565/lee.io/pkg/server"
 	"github.com/0x4c6565/lee.io/pkg/tool"
@@ -45,7 +46,12 @@ func main() {
 
 	connFactory := connection.NewMySQLConnectionFactory(config.DB.Host, config.DB.Port, config.DB.User, config.DB.Password, config.DB.DB)
 
-	server := server.NewServer(serverOpts).WithTools(
+	b, err := blog.New("./content/blog")
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to initialise blog")
+	}
+
+	server := server.NewServer(serverOpts).WithStatic("./static/lee.io").WithBlog(b).WithTools(
 		tool.NewWhois(),
 		tool.NewIP(),
 		tool.NewPort(),

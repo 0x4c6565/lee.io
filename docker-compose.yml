@@ -12,9 +12,12 @@ services:
     image: leeio
     build: .
     restart: unless-stopped
+    ports:
+      - 8080:8080
     volumes:
       - ./leeio_data/config.yaml:/app/config.yaml
       - ./leeio_data/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
+      - ./leeio_data/content:/app/content
     depends_on:
       - leeio_mysql
   phpmyadmin:

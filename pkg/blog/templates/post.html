@@ -1,0 +1,34 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>lee.io // {{.Title}}</title>
+    <link rel="stylesheet" href="/css/lee.io.css">
+    <link rel="stylesheet" href="/css/lee.io.blog.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
+    <link href="/assets/fontawesome/css/fontawesome.css" rel="stylesheet">
+    <link href="/assets/fontawesome/css/brands.css" rel="stylesheet">
+    <link href="/assets/fontawesome/css/solid.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="main">
+    <div class="min-h-screen flex justify-center py-16 px-4">
+        <div class="blog-post">
+            <div class="mb-8">
+                <a href="/blog" class="title-light hover:underline">&larr; blog</a>
+            </div>
+            <div class="title text-2xl mb-2">{{.Title}}</div>
+            <div class="title-light mb-8">{{.Date}}</div>
+            <div class="blog-body">
+                {{.HTMLContent}}
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

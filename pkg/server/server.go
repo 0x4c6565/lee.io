@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/0x4c6565/lee.io/pkg/blog"
 	"github.com/0x4c6565/lee.io/pkg/tool"
 	"github.com/gorilla/mux"
 	"github.com/robfig/cron/v3"
@@ -17,8 +18,10 @@ type ServerOptions struct {
 }
 
 type Server struct {
-	tools []tool.Tool
-	opts  ServerOptions
+	tools      []tool.Tool
+	opts       ServerOptions
+	blog       *blog.Blog
+	staticPath string
 }
 
 func NewServer(opts ServerOptions) *Server {
@@ -27,6 +30,18 @@ func NewServer(opts ServerOptions) *Server {
 
 func (s *Server) WithTools(tools ...tool.Tool) *Server {
 	s.tools = append(s.tools, tools...)
+	return s
+}
+
+func (s *Server) WithBlog(b *blog.Blog) *Server {
+	s.blog = b
+	return s
+}
+
+func (s *Server) WithStatic(path string) *Server {
+	if path != "" {
+		s.staticPath = path
+	}
 	return s
 }
 
@@ -54,7 +69,11 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}
 
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/lee.io")))
+	if s.blog != nil {
+		s.blog.Register(r)
+	}
+
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir(s.staticPath)))
 
 	go c.Run()
 	server := &http.Server{Addr: ":8080", Handler: ProxyHeaders(r)}
